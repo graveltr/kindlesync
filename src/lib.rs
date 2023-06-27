@@ -1,6 +1,9 @@
 use std::env;
+use std::path::Path;
 use std::error::Error;
 use std::fs;
+use std::fs::OpenOptions;
+use std::io::prelude::*;
 use std::collections::HashMap;
 
 pub struct Config {
@@ -29,14 +32,6 @@ impl Config {
 }
 
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
-    /*
-     * (1) Create Entry {Title, Author, Quote} by reading 4 lines and discarding
-     * junk. Pass the Entry object to a function.
-     * (2) This function searches obsidian book-notes folder for a file of the name
-     * Book title by author. If no such file is found, create a new file and add the
-     * entry to it.
-     * */
-
     let contents =
         fs::read_to_string(config.file_path).expect("Should have been able to read the file");
     let mut input: Vec<String> = Vec::new();
@@ -61,8 +56,10 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
         }
     }
 
-    print_entries_map(&entries_map);
-    // println!("{:?}", entries_map);
+    for (key, value) in entries_map {
+        insert_entries(&config.booknotes_dir, &key, &value);
+    }
+    // print_entries_map(&entries_map);
     Ok(())
 }
 
@@ -122,7 +119,22 @@ fn parse_delimited_lines(lines: &[String]) -> Entry {
 /*
  * Insert the passed entry into the obsidian notes directory.
  */
-fn insert_entry(booknotes_dir: &str, entry: &Entry) {}
+fn insert_entries(booknotes_dir: &str, title: &str, entries: &[Entry]) {
+    assert!(entries.len() > 0);
+    let full_file_path = format!("{}/{}", booknotes_dir, title);
+    println!("{full_file_path}");
+    let exists = Path::new(&full_file_path).try_exists().expect("Can't check existence");
+    let mut file = OpenOptions::new()
+        .append(true)
+        .create(!exists)
+        .open(full_file_path)
+        .unwrap();
+
+    for entry in entries {
+        let to_write: String = format!("> {}\n", entry.quote);
+        writeln!(file, "{}", to_write);
+    }
+}
 
 // TESTING //
 
