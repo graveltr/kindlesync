@@ -29,26 +29,6 @@ impl Config {
 
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     /*
-     * The clippings format from the kindle is
-     *     Book Title (Author)
-     *     - line denoting location and date
-     *     empty line
-     *     Quote all on one line
-     *     ========
-     *     <feff>Book Title (Author)
-     *     - line denoting location and date
-     *     empty line
-     *     .
-     *     .
-     *     .
-     *     ========
-     *     <feff>Book Title (Author)
-     *     - line denoting location and date
-     *     empty line
-     *
-     *     Quote all on one line
-     *     ======== EOF
-     *
      * (1) Create Entry {Title, Author, Quote} by reading 4 lines and discarding
      * junk. Pass the Entry object to a function.
      * (2) This function searches obsidian book-notes folder for a file of the name
@@ -56,6 +36,22 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
      * entry to it.
      * */
 
+    let contents =
+        fs::read_to_string(config.file_path).expect("Should have been able to read the file");
+    let mut input: Vec<String> = Vec::new();
+    for line in contents.lines() {
+        // junk the blank line or delimiters
+        if (line.contains("===")) || (line.len() == 0) {
+            continue;
+        }
+        // remove non ascii chars (for some reason kindle inputs a \u{feff} in front of book info)
+        input.push(line.replace(|c: char| !c.is_ascii(), ""));
+        if input.len() == 3 {
+            let res = parse_delimited_lines(&input);
+            println!("{:?}", res);
+            input.clear();
+        }
+    }
     Ok(())
 }
 
