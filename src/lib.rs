@@ -60,8 +60,20 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
             input.clear();
         }
     }
-    println!("{:?}", entries_map);
+
+    print_entries_map(&entries_map);
+    // println!("{:?}", entries_map);
     Ok(())
+}
+
+fn print_entries_map(entries_map: &HashMap<String, Vec<Entry>>) {
+    for (key, value) in entries_map {
+        println!("***************");
+        println!("Quotations for book: { }", key);
+        for entry in value {
+            println!("{ }\n", entry.quote);
+        }
+    }
 }
 
 #[derive(PartialEq, Debug)]
