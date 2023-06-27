@@ -40,7 +40,7 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
         fs::read_to_string(config.file_path).expect("Should have been able to read the file");
     let mut input: Vec<String> = Vec::new();
     for line in contents.lines() {
-        // junk the blank line or delimiters
+        // junk the blank lines or delimiters
         if (line.contains("===")) || (line.len() == 0) {
             continue;
         }
@@ -49,9 +49,16 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
         if input.len() == 3 {
             let res = parse_delimited_lines(&input);
             println!("{:?}", res);
+            insert_entry(&config.booknotes_dir, &res);
             input.clear();
         }
     }
+    // TODO: Instead of inserting each entry as you go, do the following
+    // (1) push entries into a map from book name -> list of entries
+    // (2) after all of the parsing is done, pass this map to another function
+    // to do the file writes
+    //
+    // + We don't need to open and close the same files a bunch (presumably this is slow)
     Ok(())
 }
 
@@ -98,7 +105,10 @@ fn parse_delimited_lines(lines: &[String]) -> Entry {
     }
 }
 
-fn insert_entry(config: &Config) {}
+/*
+ * Insert the passed entry into the obsidian notes directory.
+ */
+fn insert_entry(booknotes_dir: &str, entry: &Entry) {}
 
 // TESTING //
 
