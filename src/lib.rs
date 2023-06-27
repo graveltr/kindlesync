@@ -1,6 +1,7 @@
 use std::env;
 use std::error::Error;
 use std::fs;
+use std::collections::HashMap;
 
 pub struct Config {
     // file path of Clippings.txt
@@ -39,6 +40,8 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     let contents =
         fs::read_to_string(config.file_path).expect("Should have been able to read the file");
     let mut input: Vec<String> = Vec::new();
+    let mut entries_map: HashMap<String, Vec<Entry>> = HashMap::new();
+
     for line in contents.lines() {
         // junk the blank lines or delimiters
         if (line.contains("===")) || (line.len() == 0) {
@@ -47,18 +50,17 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
         // remove non ascii chars (for some reason kindle inputs a \u{feff} in front of book info)
         input.push(line.replace(|c: char| !c.is_ascii(), ""));
         if input.len() == 3 {
-            let res = parse_delimited_lines(&input);
-            println!("{:?}", res);
-            insert_entry(&config.booknotes_dir, &res);
+            let res: Entry = parse_delimited_lines(&input);
+            let book_vec = entries_map.entry(res.title.clone())
+                .or_insert(Vec::new());
+            (*book_vec).push(res);
+
+            // println!("{:?}", res);
+            // insert_entry(&config.booknotes_dir, &res);
             input.clear();
         }
     }
-    // TODO: Instead of inserting each entry as you go, do the following
-    // (1) push entries into a map from book name -> list of entries
-    // (2) after all of the parsing is done, pass this map to another function
-    // to do the file writes
-    //
-    // + We don't need to open and close the same files a bunch (presumably this is slow)
+    println!("{:?}", entries_map);
     Ok(())
 }
 
